@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2015-2016 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tianwen.springcloud.microservice.base.dao.ClassMapper">
+
+    <!-- 分页 -->
+    <sql id="sqlFragment_pagination">
+        <if test="numPerPage != null">
+            limit #{numPerPage}
+        </if>
+        <if test="start != null">
+            offset #{start}
+        </if>
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="sqlFragment_searchCriteria">
+        <if test="oredCriteria != null and oredCriteria.size != 0">
+            <trim prefix="and(" suffix=")">
+                <foreach collection="oredCriteria" item="criteria" separator="or">
+                    <if test="criteria.valid">
+                        <trim prefix="(" prefixOverrides="and" suffix=")">
+                            <foreach collection="criteria.criteria" item="criterion">
+                                <choose>
+                                    <when test="criterion.noValue">
+                                        and ${criterion.condition}
+                                    </when>
+                                    <when test="criterion.singleValue">
+                                        and ${criterion.condition} #{criterion.value}
+                                    </when>
+                                    <when test="criterion.betweenValue">
+                                        and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                                    </when>
+                                    <when test="criterion.listValue">
+                                        and ${criterion.condition}
+                                        <foreach close=")" collection="criterion.value" item="listItem" open="("
+                                                 separator=",">
+                                            #{listItem}
+                                        </foreach>
+                                    </when>
+                                </choose>
+                            </foreach>
+                        </trim>
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+
+    <!-- 查询用户信息列表 -->
+    <select id="getList" parameterType="java.util.Map"
+            resultType="com.tianwen.springcloud.microservice.base.entity.ClassInfo">
+        select classtbl.*,
+        sectiontbl.dictname as schoolsection,
+        gradetbl.dictname as grade,
+        orgtbl.orgname as orgname
+        from t_e_class classtbl
+        left join t_e_sys_dict_item sectiontbl on sectiontbl.dictid = classtbl.schoolsectionid
+        left join t_e_sys_dict_item gradetbl on gradetbl.dictid = classtbl.gradeid
+        left join t_e_org_edu orgtbl on orgtbl.orgid = classtbl.orgid
+        where 1=1
+        <if test="classid != null">
+            <if test="!classid.isEmpty()">
+                and classtbl.classid = #{classid}
+            </if>
+        </if>
+        <if test="schoolsectionid != null">
+            <if test="!schoolsectionid.isEmpty()">
+                and classtbl.schoolsectionid = #{schoolsectionid}
+            </if>
+        </if>
+        <if test="gradeid != null">
+            <if test="!gradeid.isEmpty()">
+                and classtbl.gradeid = #{gradeid}
+            </if>
+        </if>
+        <if test="orgid != null">
+            <if test="!orgid.isEmpty()">
+                and classtbl.orgid = #{orgid}
+            </if>
+        </if>
+        <if test="teacherid != null">
+            <if test="!teacherid.isEmpty()">
+                and classtbl.teacherid = #{teacherid}
+            </if>
+        </if>
+    </select>
+
+    <select id="getClassById" parameterType="java.util.Map"
+            resultType="com.tianwen.springcloud.microservice.base.entity.ClassInfo">
+        select classtbl.*,
+        sectiontbl.dictname as schoolsection,
+        gradetbl.dictname as grade,
+        orgtbl.orgname as orgname
+        from t_e_class classtbl
+        left join t_e_sys_dict_item sectiontbl on sectiontbl.dictid = classtbl.schoolsectionid
+        left join t_e_sys_dict_item gradetbl on gradetbl.dictvalue = classtbl.gradeid and gradetbl.dicttypeid='SCHOOL_SECTION'
+        left join t_e_org_edu orgtbl on orgtbl.orgid = classtbl.orgid
+        where 1 = 1 and classtbl.classid = #{classid}
+        <if test="lang != null">
+            <if test="!lang.isEmpty()">
+                and sectiontbl.lang = #{lang}
+                and gradetbl.lang = #{lang}
+            </if>
+        </if>
+    </select>
+
+    <select id="getCount" parameterType="java.util.Map"
+            resultType="Integer">
+        select count(classtbl.*)
+        from t_e_class classtbl
+        left join t_e_sys_dict_item sectiontbl on sectiontbl.dictid = classtbl.schoolsectionid
+        left join t_e_sys_dict_item gradetbl on gradetbl.dictid = classtbl.gradeid
+        where 1 = 1
+        <if test="classid != null">
+            <if test="!classid.isEmpty()">
+                and classtbl.classid = #{classid}
+            </if>
+        </if>
+        <if test="schoolsectionid != null">
+            <if test="!schoolsectionid.isEmpty()">
+                and classtbl.schoolsectionid = #{schoolsectionid}
+            </if>
+        </if>
+        <if test="gradeid != null">
+            <if test="!gradeid.isEmpty()">
+                and classtbl.gradeid = #{gradeid}
+            </if>
+        </if>
+        <if test="orgid != null">
+            <if test="!orgid.isEmpty()">
+                and classtbl.orgid = #{orgid}
+            </if>
+        </if>
+        <if test="teacherid != null">
+            <if test="!teacherid.isEmpty()">
+                and classtbl.teacherid = #{teacherid}
+            </if>
+        </if>
+    </select>
+</mapper>

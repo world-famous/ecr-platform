@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="common/common-header::header('登录')">
+</head>
+
+<body class="login-page">
+<!-- 头部 -->
+<div class="g-header">
+    <a class="header-logo"><img src="/css/images/logo.png" th:src="@{${CONTEXT_STATIC_PATH}+'/css/images/logo.png?'+${version}}"/><span>天闻开发平台</span></a>
+</div>
+<!-- /头部 -->
+
+<!-- 登录页：主体 -->
+<div class="login-body" data-as="bottombox" data-param="90">
+       <ul class="login-box">
+       	<li><h3>系统登录</h3></li>
+       	<form action="/oauth/authorize" method="post" id="authorizeForm" th:action="@{'/oauth/authorize'}">
+       		<input type="hidden" id="client_id" name="client_id" th:value="${client_id}"/>
+       		<input type="hidden" id="response_type" name="response_type" th:value="${response_type}"/>
+        	<input type="hidden" id="redirect_uri" name="redirect_uri" th:value="${redirect_uri}"/>
+       	 	<input type="hidden" id="state" name="state" th:value="${state}"/>
+       	 	
+           <li><input id="uname" name="uname" type="text" placeholder="请输入登录帐号" /><i class="ico-login ico-login-user"></i></li>
+           <li><input id="staticmm" name="staticmm" type="password" placeholder="请输入密码"/><i class="ico-login ico-login-pwd"></i></li>
+            <li><input class="f-w100 f-h36" type="text" name="captcha" id="validate_code"/><img id="captchaimage" src="/captcha-image" 
+            th:src="@{'/captcha-image'}" style="height: 36px;width: 110px;padding:0px 5px;"/>
+            <a onclick="other_image();">换一张</a></li>
+           <li class="login-error"><span th:text="${errorMessage}" class="js-login-msg"></span></li>
+           <li><input type="button" value="登录" class="btn js-login-btn" style="width:100%;"></input></li>
+			<li>
+			<div style="width: 50%;float:left;"><a onclick="findPwd();" style="float:right;margin-right:10px;">忘记密码</a></div>
+			<div style="width: 50%;float:right;"><a onclick="register();" style="float:left;margin-left:10px;">注册</a></div>
+			</li>
+     	</form>
+       </ul>
+</div>
+<!-- /登录页：主体 -->
+
+<div class="g-footer" th:include="common/common-footer::footer"></div>
+
+<script src="${CONTEXT_STATIC_PATH}/js/base/jquery/jquery.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/jquery.min.js?'+${version}}"></script>
+<script src="${CONTEXT_STATIC_PATH}/js/base/bootstrap/bootstrap.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/bootstrap/bootstrap.min.js?'+${version}}"></script>
+<script src="${CONTEXT_STATIC_PATH}/js/base/respond/twui.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/respond/twui.js?'+${version}}"></script>
+<script src="${CONTEXT_STATIC_PATH}/js/base/seajs/sea.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/seajs/sea.min.js?'+${version}}"></script>
+<script src="${CONTEXT_STATIC_PATH}/js/base/jquery/jquery.cookie-1.4.1.min.js"  th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/jquery.cookie-1.4.1.min.js?'+${version}}"></script>
+<script src="${CONTEXT_STATIC_PATH}/js/base/core/base64.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/core/base64.js?'+${version}}"></script>
+
+
+<script>
+	function other_image(){
+		 var img = document.getElementById("captchaimage");    
+         img.src = CONTEXT_PATH+"/captcha-image?rnd=" + Math.random();  
+         return false;
+	}
+
+	function findPwd(){
+		var oldUrl = encodeURIComponent(window.location.href);
+		window.location.href = CONTEXT_PATH + "/oauth/findPassword?oldUrl="+oldUrl;
+	}
+	function register(){
+		var oldUrl = encodeURIComponent(window.location.href);
+		window.location.href = CONTEXT_PATH + "/oauth/register?oldUrl="+oldUrl;
+	}
+
+	var BASE_USER_LANGUAGE = 'zh_cn';
+	 seajs.config({
+	        base: (CONTEXT_STATIC_PATH ? CONTEXT_STATIC_PATH : CONTEXT_PATH) +"/js"
+	    });
+	seajs.use(['lang/zh_cn', 'base/core/login', 'base/core/promote']);
+</script>
+</body>
+</html>

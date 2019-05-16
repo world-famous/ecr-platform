@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2015-2016 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tianwen.springcloud.microservice.activity.dao.ActivityMapper">
+
+    <!-- 分页 -->
+    <sql id="sqlFragment_pagination">
+        <if test="numPerPage != null">
+            limit #{numPerPage}
+        </if>
+        <if test="start != null">
+            offset #{start}
+        </if>
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="sqlFragment_searchCriteria">
+        <if test="oredCriteria != null and oredCriteria.size != 0">
+            <trim prefix="and(" suffix=")">
+                <foreach collection="oredCriteria" item="criteria" separator="or">
+                    <if test="criteria.valid">
+                        <trim prefix="(" prefixOverrides="and" suffix=")">
+                            <foreach collection="criteria.criteria" item="criterion">
+                                <choose>
+                                    <when test="criterion.noValue">
+                                        and ${criterion.condition}
+                                    </when>
+                                    <when test="criterion.singleValue">
+                                        and ${criterion.condition} #{criterion.value}
+                                    </when>
+                                    <when test="criterion.betweenValue">
+                                        and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                                    </when>
+                                    <when test="criterion.listValue">
+                                        and ${criterion.condition}
+                                        <foreach close=")" collection="criterion.value" item="listItem" open="("
+                                                 separator=",">
+                                            #{listItem}
+                                        </foreach>
+                                    </when>
+                                </choose>
+                            </foreach>
+                        </trim>
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+
+    <sql id="activityTable">
+        (
+            select
+                CASE
+                    WHEN (
+                    t1.starttime > CURRENT_TIMESTAMP
+                    OR CURRENT_DATE > t1.endtime
+                    ) THEN
+                    '0'
+                    ELSE
+                    t1.status
+                END
+                as status,
+                t1.activityid,
+                t1.activityname,
+                t1.starttime,
+                t1.endtime,
+                t1.requirement,
+                t1.format,
+                t1.description,
+                t1.bonuspoints,
+                t1.according,
+                t1.activitytype,
+                t1.activitytemplate,
+                t1.creator,
+                t1.lastmodifytime,
+                t1.createtime,
+                t1.contenttype,
+                t1.logopath,
+                t1.enddescription,
+                t1.votestarttime,
+                t1.voteendtime,
+                t1.bonusnotetext,
+                t1.requirementtext,
+                t1.descriptiontext,
+                t1.recommand,
+                t1.isanonymity
+                from t_e_collection_activity t1
+            )
+    </sql>
+
+    <sql id="queryCondition">
+        <if test="usertype != null">
+            <if test="!usertype.isEmpty()">
+                and t0.status != '0'
+            </if>
+        </if>
+        <if test="activityids != null">
+            and (1 = 0
+            <foreach item="activityid" collection="activityids">
+                <if test="!activityid.isEmpty()">
+                    or t0.activityid = #{activityid}
+                </if>
+            </foreach>)
+        </if>
+        <if test="curuserid != null and !curuserid.isEmpty()">
+            and t0.creator != #{curuserid}
+        </if>
+        <if test="activitytype != null">
+            and t0.activitytype=#{activitytype}
+        </if>
+        <if test="activitytemplate != null">
+            <if test="!activitytemplate.isEmpty()">
+                AND t0.activitytemplate=#{activitytemplate}
+            </if>
+        </if>
+        <if test="activityname != null">
+            <if test="!activityname.isEmpty()">
+                AND t0.activityname ILIKE '%'||#{activityname}||'%'
+            </if>
+        </if>
+        <if test="format != null">
+            <if test="!format.isEmpty()">
+                AND t0.format ILIKE '%'||#{format}||'%'
+            </if>
+        </if>
+        <if test="creator != null">
+            <if test="!creator.isEmpty()">
+                AND t0.creator = #{creator}
+            </if>
+        </if>
+        <if test="creatorids != null">
+            and (1 = 0
+            <foreach item="creator" collection="creatorids">
+                <if test="!creator.isEmpty()">
+                    or t0.creator = #{creator}
+                </if>
+            </foreach>)
+        </if>
+        <if test="status != null and !status.isEmpty()">
+            and t0.status = #{status}
+        </if>
+        <if test="recommand != null and !recommand.isEmpty()">
+            and t0.recommand = #{recommand}
+        </if>
+    </sql>
+
+    <select id="queryActivityForList" parameterType="java.util.Map"
+            resultType="com.tianwen.springcloud.microservice.activity.entity.Activity">
+        select * from
+        <include refid="activityTable"/> t0
+        WHERE 1=1
+        <include refid="queryCondition"/>
+        <if test="orderBycreatetime != null">
+            ORDER BY t0.createtime DESC
+        </if>
+        <include refid="sqlFragment_pagination"/>
+    </select>
+
+    <select id="countForActivityList" parameterType="java.util.Map" resultType="Long">
+        SELECT
+          count(t0.*)
+        FROM
+          <include refid="activityTable"/> t0
+        WHERE true
+          <include refid="queryCondition"/>
+    </select>
+
+    <select id="getActivityCreatorIds" parameterType="java.util.Map" resultType="String">
+        SELECT DISTINCT
+            (tbl.creator)
+        FROM
+            (
+                SELECT
+                  (t0.creator)
+                FROM
+                  t_e_collection_activity t0
+                WHERE
+                  true
+                <if test="activitytype != null">
+                    and t0.activitytype=#{activitytype}
+                </if>
+                <if test="OrderByCreatetime != null">
+                    ORDER BY t0.createtime DESC
+                </if>
+            ) tbl
+    </select>
+
+    <select id="getActivityIdsByQuery" parameterType="java.util.Map" resultType="String">
+        SELECT
+        activityid
+        FROM
+        t_e_collection_activity
+        WHERE
+        true
+        <if test="activityidkey != ''">
+            and activityid ILIKE '%'||#{activityidkey}||'%'
+        </if>
+        <if test="activitynamekey != ''">
+            and activityname ILIKE '%'||#{activitynamekey}||'%'
+        </if>
+    </select>
+
+    <select id="getActivityStatus" parameterType="java.lang.String" resultType="String">
+        SELECT
+            CASE
+        WHEN (
+            CURRENT_TIMESTAMP > starttime
+            AND endtime > CURRENT_DATE
+        ) THEN
+            '1'
+        ELSE
+            '0'
+        END AS status
+        FROM
+            t_e_collection_activity
+        WHERE
+	    activityid = #{activityid}
+    </select>
+
+    <select id="getIds" parameterType="java.util.Map" resultType="String">
+        SELECT
+          t0.*
+        FROM
+          t_e_collection_activity t0
+        WHERE 1=1
+        <if test="activitytype != null">
+            and t0.activitytype=#{activitytype}
+        </if>
+        <if test="activityname != null">
+            <if test="!activityname.isEmpty()">
+                AND t0.activityname ILIKE '%'||#{activityname}||'%'
+            </if>
+        </if>
+        <if test="status != null">
+            <if test="!status.isEmpty()">
+                AND t0.status = #{status}
+            </if>
+        </if>
+        <if test="creator != null">
+            <if test="!creator.isEmpty()">
+                AND t0.creator = #{creator}
+            </if>
+        </if>
+--         Author : GOD, 2019-2-12 Bug ID: #680
+        <if test="activityid != null">
+            <if test="!activityid.isEmpty()">
+                AND t0.activityid = #{activityid}
+            </if>
+        </if>
+--         Author : GOD, 2019-2-12 Bug ID: #680
+    </select>
+
+    <select id="getIdsExtra" parameterType="java.util.Map" resultType="String">
+        SELECT
+        t0.*
+        FROM
+        t_e_collection_activity t0
+        WHERE 1=1
+        <if test="activitynamekey != null">
+            <if test="!activitynamekey.isEmpty()">
+                AND t0.activityname ILIKE '%'||#{activitynamekey}||'%'
+            </if>
+        </if>
+        <if test="activityidkey != null">
+            <if test="!activityidkey.isEmpty()">
+                AND t0.activityid ILIKE '%'||#{activityidkey}||'%'
+            </if>
+        </if>
+    </select>
+
+    <select id="getCountByCreator" resultType="Long" parameterType="java.util.Map">
+        SELECT
+            COUNT (*)
+        FROM
+            t_e_collection_activity
+        WHERE
+            activitytype = '2'
+        AND creator = #{creator}
+    </select>
+</mapper>

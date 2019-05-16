@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="common/common-header::header('注册用户')">
+</head>
+
+    <style>
+        .show-condition {
+            display: none; 
+        }
+    </style>
+    
+<body class="body-white">
+
+    <!--机构选择弹窗-->
+    <div class="modal pop-search-org" data-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal"><i class="ico ico-close"></i></a>
+                    <h4 class="modal-title">机构选择</h4>
+                </div>
+                <div class="modal-body modal-form">
+                    <div class="m-search-org text-center">
+                        <div class="form-item">
+                            <label class="f-title must">机构名称:</label>
+                            <input type="text" id="key" value="" class="empty f-w200" />
+                        </div>
+                        <div class="form-item">
+                            <label class="f-title must">机构列表:</label>
+                            <div class="tree-org f-w200 pre-scrollable">
+                                <ul id="treeRight" class="ztree"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn large btn-green comfirm">确定</a>
+                    <a class="btn large" data-dismiss="modal">取消</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/机构选择弹窗-->
+
+    <div class="container">
+        <div class="form-horizontal m-regist">
+        	<input type="hidden" id="oldUrl" th:value="${oldUrl}" />
+        	<input type="hidden" id="zuul_url" th:value="${zuul_url}" />
+            <h3 class="title text-center">注册新用户</h3>
+            <div class="form-item m-email">
+                <label class="f-title must">账号</label>
+                <input type="text" id="add_loginName" placeholder="请输入您的邮箱/手机/登录账号" />
+                <span class="u-error">账号不能为空</span>
+            </div>
+            <div class="form-item">
+                <label class="f-title must">设置密码</label>
+                <input type="password" id="add_staticPassword" placeholder="请输入您的密码" />
+                <span class="u-error">密码不能为空</span>
+                <!--  
+                <span class="u-error">密码包括字母、数字和特殊符号</span>
+                -->
+            </div>
+            <div class="form-item">
+                <label class="f-title must">确认密码</label>
+                <input type="password" id="add_staticPassword1" placeholder="请再次输入您的密码" />
+                <span class="u-error">确认密码不能为空</span>
+                <!--  
+                <span class="u-error">密码包括字母、数字和特殊符号</span>
+                -->
+            </div>
+            <div class="form-item">
+                <label class="f-title">用户身份</label>
+                <select id="add_roleId">
+                	<option value="1000000000">游客</option>
+                    <option value="1000000002">老师</option>
+                    <option value="1000000003">学生</option>
+                    <!-- <option value="1000000004">家长</option> -->
+                </select>
+            </div>
+            <!-- 公共属性  -->
+            <div class="form-item show-condition show-common">
+                <label class="f-title must">机构</label>
+                <input type="text" id="add_orgName" class="js-choose-org" placeholder="点击选择机构" />
+                <span class="u-error">该角色必须选择一个机构</span>
+                <input type="hidden" id="add_orgId" />
+            </div>
+			<div class="form-item show-condition show-common">
+                <label class="f-title must">姓名</label>
+                <input type="text" id="add_realName" placeholder="请输入您的姓名" />
+                <span class="u-error">姓名不能为空</span>
+            </div>
+            <div class="form-item show-condition show-common">
+                <label class="f-title">邮箱</label>
+                <input type="text" id="add_loginEmail" placeholder="请输入您的邮箱" />
+            </div>
+            <div class="form-item show-condition show-common">
+                <label class="f-title">手机</label>
+                <input type="text" id="add_loginMobile" placeholder="请输入您的手机号码" />
+            </div>
+            <!-- /公共属性  -->
+            <!-- 教师专有属性  -->
+            	<!-- show-teacher -->
+			<!-- /教师专有属性  -->
+            <!-- 学生专有属性  -->
+            <div class="form-item show-condition show-student">
+                <label class="f-title">所属班级</label>
+                <select id="add_classId">
+                </select>
+                <span class="u-error">班级必填项</span>
+            </div>
+            <div class="form-item show-condition show-student">
+                <label class="f-title must">学籍号</label>
+                <input type="text" id="add_studentCode" placeholder="请输入您的学籍号" />
+                <span class="u-error">学籍号不能为空</span>
+            </div>
+			<!-- /学生专有属性  -->
+            <!-- 家长专有属性  -->
+            	<!-- show-parent -->
+			<!-- /家长专有属性  -->
+
+            <div class="form-item">
+                <label class="f-title">验证码</label>
+                <input type="text" class="code" id="add_code"/>
+                <div class="code-img">
+                    <img id="captchaimage" src="/captcha-image" th:src="@{'/captcha-image'}" title="点击刷新验证码" alt="验证码" />
+                </div>
+                <a onclick="other_image();">换一换</a>
+                <span class="u-error" id="code_error">验证码不能为空</span>
+            </div>
+            <div class="form-item">
+                <label class="f-title"></label>
+                <a class="btn large btn-green doregister">注册</a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 脚本 -->
+    <script src="/js/base/jquery/jquery.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/jquery.min.js?'+${version}}"></script>
+	<script src="/js/base/bootstrap/bootstrap.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/bootstrap/bootstrap.min.js?'+${version}}"></script>
+	<script src="/js/base/bootstrap/bootstrap-datetimepicker.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/bootstrap/bootstrap-datetimepicker.min.js?'+${version}}"></script>
+    <script src="/js/base/bootstrap/locales/bootstrap-datetimepicker.zh-CN.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/bootstrap/locales/bootstrap-datetimepicker.zh-CN.js?'+${version}}"></script>
+	<script src="/js/base/respond/twui.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/respond/twui.js?'+${version}}"></script>
+	<script src="/js/base/seajs/sea.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/seajs/sea.min.js?'+${version}}"></script>
+    <script src="/js/base/jquery/select2.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/select2.min.js?'+${version}}"></script>
+    <script src="/js/base/jquery/jquery.ztree.core.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/jquery.ztree.core.min.js?'+${version}}"></script>
+    <script src="/js/base/jquery/jquery.validate.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/jquery.validate.min.js?'+${version}}"></script>
+    <script src="/js/base/jquery/jquery.cookie-1.4.1.min.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/jquery/jquery.cookie-1.4.1.min.js?'+${version}}"></script>
+	<script src="/js/base/core/base64.js" th:src="@{${CONTEXT_STATIC_PATH}+'/js/base/core/base64.js?'+${version}}"></script>
+    <!-- /脚本 -->
+
+    <script th:inline="javascript">
+    	var BASE_USER_LANGUAGE = 'zh_cn';
+        function other_image(){
+   		 var img = document.getElementById("captchaimage");    
+            img.src = CONTEXT_PATH + "/captcha-image?rnd=" + Math.random();  
+            return false;
+   		}
+        
+        seajs.config({
+    	    base: (CONTEXT_STATIC_PATH? CONTEXT_STATIC_PATH : CONTEXT_PATH) + "/js",
+    	});
+	    seajs.use('lang/zh_cn');
+	    seajs.use("base/core/promote");
+    	seajs.use(['module/user/register']);
+        
+    </script>
+
+</body>
+
+</html>

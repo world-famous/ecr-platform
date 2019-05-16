@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2015-2016 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tianwen.springcloud.microservice.base.dao.LabelMapper">
+
+    <!-- 分页 -->
+    <sql id="sqlFragment_pagination">
+        <if test="numPerPage != null">
+            limit #{numPerPage}
+        </if>
+        <if test="start != null">
+            offset #{start}
+        </if>
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="sqlFragment_searchCriteria">
+        <if test="oredCriteria != null and oredCriteria.size != 0">
+            <trim prefix="and(" suffix=")">
+                <foreach collection="oredCriteria" item="criteria" separator="or">
+                    <if test="criteria.valid">
+                        <trim prefix="(" prefixOverrides="and" suffix=")">
+                            <foreach collection="criteria.criteria" item="criterion">
+                                <choose>
+                                    <when test="criterion.noValue">
+                                        and ${criterion.condition}
+                                    </when>
+                                    <when test="criterion.singleValue">
+                                        and ${criterion.condition} #{criterion.value}
+                                    </when>
+                                    <when test="criterion.betweenValue">
+                                        and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                                    </when>
+                                    <when test="criterion.listValue">
+                                        and ${criterion.condition}
+                                        <foreach close=")" collection="criterion.value" item="listItem" open="("
+                                                 separator=",">
+                                            #{listItem}
+                                        </foreach>
+                                    </when>
+                                </choose>
+                            </foreach>
+                        </trim>
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+
+    <sql id="oneConditions">
+        <if test="labelid != null">
+            <if test="!labelid.isEmpty()">
+                and (onetbl.labelid = #{labelid} or twotbl.labelid = #{labelid} or threetbl.labelid = #{labelid})
+            </if>
+        </if>
+        <if test="labelname != null">
+            <if test="!labelname.isEmpty()">
+                and (onetbl.labelname ilike '%'||#{labelname}||'%' or twotbl.labelname ilike '%'||#{labelname}||'%' or threetbl.labelname ilike '%'||#{labelname}||'%')
+            </if>
+        </if>
+        <if test="labelnames != null">
+            and (1 = 0
+            <foreach collection="labelnames" item="name">
+                or onetbl.labelname ilike '%'||#{name}||'%' or twotbl.labelname ilike '%'||#{name}||'%' or threetbl.labelname ilike '%'||#{name}||'%'
+            </foreach>)
+        </if>
+        <if test="labeltype != null">
+            <if test="!labeltype.isEmpty()">
+                and (onetbl.labeltype = #{labeltype} or twotbl.labeltype = #{labeltype} or threetbl.labeltype = #{labeltype})
+            </if>
+        </if>
+        <if test="businesstype != null">
+            <if test="!businesstype.isEmpty()">
+                and (onetbl.businesstype = #{businesstype} or twotbl.businesstype = #{businesstype} or threetbl.businesstype = #{businesstype})
+            </if>
+        </if>
+        <if test="property != null">
+            <if test="!property.isEmpty()">
+                and (onetbl.property = #{property} or twotbl.property = #{property} or threetbl.property = #{property})
+            </if>
+        </if>
+        <if test="schoolid != null">
+            <if test="!schoolid.isEmpty()">
+                and (onetbl.schoolid = #{schoolid} or twotbl.schoolid = #{schoolid} or threetbl.schoolid = #{schoolid})
+            </if>
+        </if>
+        <if test="creator != null">
+            <if test="!creator.isEmpty()">
+                and (onetbl.creator = #{creator} or twotbl.creator = #{creator} or threetbl.creator = #{creator})
+            </if>
+        </if>
+    </sql>
+
+    <sql id="areaFilter">
+        select
+            orgid
+        from t_e_org_edu
+        join t_jc_sys_area area1 USING (areaid)
+        left join t_jc_sys_area area2 on area2.areaid = area1.parentareaid
+        left join t_jc_sys_area area3 on area3.areaid = area2.parentareaid
+        where area1.areaid = #{areaid} or area2.areaid = #{areaid} or area3.areaid = #{areaid}
+    </sql>
+
+    <sql id="twoConditions">
+        where onetbl.parentlabelid = '0'
+        and (onetbl.status is null or onetbl.status != '0')
+        and (twotbl.status is null or twotbl.status != '0')
+        <if test="parentlabelid != null">
+            <if test="!parentlabelid.isEmpty()">
+                and twotbl.parentlabelid = #{parentlabelid}
+            </if>
+        </if>
+        <if test="areaid != null and !areaid.isEmpty()">
+            and twotbl.schoolid in (
+                <include refid="areaFilter"/>
+            )
+        </if>
+        <if test="schoolsectionid != null and !schoolsectionid.isEmpty()">
+            and twotbl.schoolsectionid = #{schoolsectionid}
+        </if>
+        <if test="subjectid != null and !subjectid.isEmpty()">
+            and twotbl.subjectid = #{subjectid}
+        </if>
+        <if test="gradeid != null and !gradeid.isEmpty()">
+            and twotbl.gradeid = #{gradeid}
+        </if>
+        <if test="editiontypeid != null and !editiontypeid.isEmpty()">
+            and twotbl.editiontypeid = #{editiontypeid}
+        </if>
+        <if test="bookmodelid != null and !bookmodelid.isEmpty()">
+            and twotbl.bookmodelid = #{bookmodelid}
+        </if>
+        <if test="labelname != null and !labelname.isEmpty()">
+            and onetbl.labelname ilike '%'||#{labelname}||'%'
+        </if>
+--         Author: GOD 2019-2-20 Bug ID: #792
+        <if test="begin_time != null">
+            and twotbl.lastmodifytime >= #{begin_time}
+        </if>
+        <if test="end_time != null">
+            and #{end_time} >= twotbl.lastmodifytime
+        </if>
+--         Author: GOD 2019-2-20 Bug ID: #792
+    </sql>
+
+    <sql id="threeConditions">
+        where onetbl.parentlabelid = '0'
+        and (onetbl.status is null or onetbl.status != '0')
+        and (twotbl.status is null or twotbl.status != '0')
+        and (threetbl.status is null or threetbl.status != '0')
+        <if test="parentlabelid != null">
+            <if test="!parentlabelid.isEmpty()">
+                and threetbl.parentlabelid = #{parentlabelid}
+            </if>
+        </if>
+        <if test="twolabelid != null">
+            <if test="!twolabelid.isEmpty()">
+                and twotbl.labelid = #{twolabelid}
+            </if>
+        </if>
+        <if test="twolabelname != null">
+            <if test="!twolabelname.isEmpty()">
+                and twotbl.labelname = #{twolabelname}
+            </if>
+        </if>
+        <if test="onelabelid != null">
+            <if test="!onelabelid.isEmpty()">
+                and onetbl.labelid = #{onelabelid}
+            </if>
+        </if>
+        <if test="onelabelname != null">
+            <if test="!onelabelname.isEmpty()">
+                and onetbl.labelname = #{onelabelname}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="validateLabelInfo">
+        (select dictname from t_e_sys_dict_item where dictvalue = total.schoolsectionid and dicttypeid = 'SCHOOL_SECTION'
+        <if test="lang != null">
+            <if test="!lang.isEmpty()">
+                and lang = #{lang}
+            </if>
+        </if> limit 1) as schoolsection,
+        (select dictname from t_e_sys_dict_item where dictvalue = total.subjectid and dicttypeid = 'SUBJECTID'
+        <if test="lang != null">
+            <if test="!lang.isEmpty()">
+                and lang = #{lang}
+            </if>
+        </if> limit 1) as subject,
+        (select dictname from t_e_sys_dict_item where dictvalue = total.gradeid and dicttypeid = 'SCHOOL_SECTION'
+        <if test="lang != null">
+            <if test="!lang.isEmpty()">
+                and lang = #{lang}
+            </if>
+        </if> limit 1) as grade,
+        (select dictname from t_e_sys_dict_item where dictvalue = total.editiontypeid and dicttypeid = 'EDITION'
+        <if test="lang != null">
+            <if test="!lang.isEmpty()">
+                and lang = #{lang}
+            </if>
+        </if> limit 1) as editiontype,
+        (select dictname from t_e_sys_dict_item where dictvalue = total.bookmodelid and (dicttypeid = 'TERM' or dicttypeid = 'VOLUME')
+        <if test="lang != null">
+            <if test="!lang.isEmpty()">
+                and lang = #{lang}
+            </if>
+        </if>
+        limit 1) as bookmodel,
+        (select realname from t_e_user_logininfo where userid = total.creator limit 1) as creatorname,
+        (select orgname from t_e_org_edu where orgid = total.schoolid limit 1) as schoolname
+    </sql>
+
+    <select id="validateLabel" parameterType="java.util.ArrayList"
+            resultType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select total.*, count(children.labelid) as childcount
+        <include refid="validateLabelInfo"/>
+        from (select * from t_e_label t0
+        where t0.labelid in
+        <foreach collection="labels" item="label" separator="," open="(" close=")">
+            label.labelid
+        </foreach>) total
+        left join t_e_label children on children.parentlabelid = total.labelid
+        group by total.labelid
+    </select>
+
+    <select id="getMaxSibling" parameterType="String"
+            resultType="String">
+        select max(sequence) from t_e_label where parentlabelid = #{parentlabelid}
+    </select>
+
+    <select id="getSiblings" parameterType="String"
+            resultType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select * from t_e_label where parentlabelid = #{parentlabelid}
+        order by parentlabelid asc, sortmethod asc, sequence asc
+    </select>
+
+    <select id="getChildrenByParent" parameterType="com.tianwen.springcloud.microservice.base.entity.Label"
+            resultType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select * from t_e_label where parentlabelid = #{parentlabelid}
+    </select>
+
+    <select id="countOneLabelForList" parameterType = "java.util.Map"
+            resultType="Long">
+        select count(*)
+        from t_e_label
+        where parentlabelid = '0'
+        and (status is null or status != '0')
+    </select>
+
+    <select id="queryOneLabelForList" parameterType = "java.util.Map"
+            resultType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select total.*,
+        <include refid="validateLabelInfo"/>
+        from (
+            select * from t_e_label
+            where parentlabelid = '0'
+            and (status is null or status != '0')
+            order by sortmethod asc, sequence asc, labelid asc
+            <if test="getalldata == null">
+                <include refid="sqlFragment_pagination"/>
+            </if>
+        ) total
+    </select>
+
+    <select id="queryTwoLabelForList" parameterType = "java.util.Map"
+            resultType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select total.*,
+        <include refid="validateLabelInfo"/>
+        from (
+            select * from t_e_label t0
+            where t0.labelid in (
+                select
+                    distinct(twotbl.labelid)
+                from t_e_label onetbl
+                left join t_e_label twotbl on twotbl.parentlabelid = onetbl.labelid
+                <include refid="twoConditions"/>
+                <if test="getalldata == null">
+                    <include refid="sqlFragment_pagination"/>
+                </if>
+            )
+            order by sortmethod asc, sequence asc, labelid asc
+        ) total
+    </select>
+
+    <select id="countTwoLabelForList" parameterType = "java.util.Map"
+            resultType="Long">
+        select count(t0.*)
+        from t_e_label t0 where t0.labelid in (
+        select distinct(twotbl.labelid) from t_e_label onetbl
+        left join t_e_label twotbl on twotbl.parentlabelid = onetbl.labelid
+        <include refid="twoConditions"/>)
+    </select>
+
+    <select id="queryThreeLabelForList" parameterType = "java.util.Map"
+            resultType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select total.*,
+        <include refid="validateLabelInfo"/>
+        from (select * from t_e_label t0 where t0.labelid in (
+            select distinct(threetbl.labelid) from t_e_label onetbl
+            left join t_e_label twotbl on twotbl.parentlabelid = onetbl.labelid
+            left join t_e_label threetbl on threetbl.parentlabelid = twotbl.labelid
+            <include refid="threeConditions"/>
+            <if test="getalldata == null">
+                <include refid="sqlFragment_pagination"/>
+            </if>
+            )
+        order by sortmethod asc, sequence asc, labelid asc
+        ) total
+    </select>
+
+    <select id="countThreeLabelForList" parameterType = "java.util.Map"
+            resultType="Long">
+        select count(t0.*)
+        from t_e_label t0 where t0.labelid in (select distinct(threetbl.labelid)l from t_e_label onetbl
+        left join t_e_label twotbl on twotbl.parentlabelid = onetbl.labelid
+        left join t_e_label threetbl on threetbl.parentlabelid = twotbl.labelid
+        <include refid="threeConditions"/>
+        )
+    </select>
+
+    <select id="getLabelStructure" parameterType="java.util.Map"
+            resultType="String">
+        select (case when onetbl.labelid is null then '' else onetbl.labelid end)
+        ||(case when twotbl.labelid is null then '' else ','||twotbl.labelid end)
+        ||(case when threetbl.labelid is null then '' else ','||threetbl.labelid end)
+        from t_e_label onetbl
+        left join t_e_label twotbl on onetbl.parentlabelid = twotbl.labelid
+        left join t_e_label threetbl on twotbl.parentlabelid = threetbl.labelid
+        where (onetbl.labelid is null or onetbl.status != '0')
+        and (twotbl.labelid is null or twotbl.status != '0')
+        and (threetbl.labelid is null or threetbl.status != '0')
+        and onetbl.labelid = #{labelid}
+    </select>
+
+    <select id="getByExample" resultType="com.tianwen.springcloud.microservice.base.entity.Label"
+            parameterType="com.tianwen.springcloud.microservice.base.entity.Label">
+        select * from t_e_label
+        where 1=1
+        <if test="labelid != null and !labelid.isEmpty()">
+            and labelid=#{labelid}
+        </if>
+        <if test="labelname != null and !labelname.isEmpty()">
+            and labelname=#{labelname}
+        </if>
+        limit 1
+    </select>
+
+    <select id="getOneLabelIds" resultType="String" parameterType="java.util.Map">
+        select labelid from t_e_label
+        where TRUE
+        <if test="labelname != null and !labelname.isEmpty()">
+            AND labelname ILIKE '%'||#{labelname}||'%'
+        </if>
+        and parentlabelid = '0'
+    </select>
+
+    <select id="getChildCount" parameterType="String" resultType="Integer">
+        select count(*) from t_e_label where parentlabelid = #{labelid}
+    </select>
+</mapper>

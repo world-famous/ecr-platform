@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2015-2016 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tianwen.springcloud.microservice.base.dao.StudentMapper">
+
+    <!-- 分页 -->
+    <sql id="sqlFragment_pagination">
+        <if test="numPerPage != null">
+            limit #{numPerPage}
+        </if>
+        <if test="start != null">
+            offset #{start}
+        </if>
+    </sql>
+
+    <resultMap id="userLoginInfo" type="com.tianwen.springcloud.microservice.base.entity.UserLoginInfo">
+        <id property="userid" column="userid"/>
+        <result property="loginname" column="loginname"/>
+        <result property="loginemail" column="loginemail"/>
+        <result property="loginmobile" column="loginmobile"/>
+        <result property="staticpassword" column="staticpassword"/>
+        <result property="createtime" column="createtime"/>
+        <result property="currentlogintime" column="currentlogintime"/>
+        <result property="lastlogintime" column="lastlogintime"/>
+        <result property="lastmodifytime" column="lastmodifytime"/>
+        <result property="status" column="status"/>
+        <result property="lastlockedtime" column="lastlockedtime"/>
+        <result property="lastloginfailedtime" column="lastloginfailedtime"/>
+        <result property="loginfailedcount" column="loginfailedcount"/>
+        <result property="realname" column="realname"/>
+        <result property="islocked" column="islocked"/>
+        <result property="orgid" column="orgid"/>
+        <result property="idcardno" column="idcardno"/>
+        <result property="sex" column="sex"/>
+        <result property="birthday" column="birthday"/>
+        <result property="fileid" column="fileid"/>
+        <result property="token" column="token"/>
+        <result property="expires_in" column="expires_in"/>
+        <result property="refreshtoken" column="refreshtoken"/>
+        <result property="tokenrefreshedtime" column="tokenrefreshedtime"/>
+        <result property="photopath" column="photopath"/>
+        <result property="desc" column="desc"/>
+    </resultMap>
+
+    <resultMap id="studentMap" type="com.tianwen.springcloud.microservice.base.entity.Student">
+        <id property="userid" column="userid"/>
+        <result property="studentcode" column="studentcode"/>
+        <result property="classid" column="classid"/>
+        <result property="parentid" column="parentid"/>
+        <result property="extinfo" column="extinfo"/>
+        <result property="createtime" column="createtime"/>
+        <result property="lastmodifytime" column="lastmodifytime"/>
+        <association property="userinfo" resultMap="userLoginInfo"/>
+    </resultMap>
+
+    <!-- 查询条件 -->
+    <sql id="sqlFragment_searchCriteria">
+        <if test="oredCriteria != null and oredCriteria.size != 0">
+            <trim prefix="and(" suffix=")">
+                <foreach collection="oredCriteria" item="criteria" separator="or">
+                    <if test="criteria.valid">
+                        <trim prefix="(" prefixOverrides="and" suffix=")">
+                            <foreach collection="criteria.criteria" item="criterion">
+                                <choose>
+                                    <when test="criterion.noValue">
+                                        and ${criterion.condition}
+                                    </when>
+                                    <when test="criterion.singleValue">
+                                        and ${criterion.condition} #{criterion.value}
+                                    </when>
+                                    <when test="criterion.betweenValue">
+                                        and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                                    </when>
+                                    <when test="criterion.listValue">
+                                        and ${criterion.condition}
+                                        <foreach close=")" collection="criterion.value" item="listItem" open="("
+                                                 separator=",">
+                                            #{listItem}
+                                        </foreach>
+                                    </when>
+                                </choose>
+                            </foreach>
+                        </trim>
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+
+    <!-- 查询用户信息列表 -->
+
+    <select id="getCount" parameterType="java.util.Map"
+            resultType="Integer">
+        select count(*)
+        from t_e_student stdtbl
+        where 1 = 1
+        <if test="userid != null">
+            <if test="!userid.isEmpty()">
+                and stdtbl.userid = #{userid}
+            </if>
+        </if>
+        <if test="classid != null">
+            <if test="!classid.isEmpty()">
+                and stdtbl.classid = #{classid}
+            </if>
+        </if>
+        <if test="studentcode != null">
+            <if test="!studentcode.isEmpty()">
+                and stdtbl.studentcode = #{studentcode}
+            </if>
+        </if>
+        <if test="parentid != null">
+            <if test="!parentid.isEmpty()">
+                and stdtbl.parentid = #{parentid}
+            </if>
+        </if>
+        <if test="begin_time != null">
+            <if test="!begin_time.isEmpty()">
+                and stdtbl.createtime >= #{begin_time}
+            </if>
+        </if>
+        <if test="end_time != null">
+            <if test="!end_time.isEmpty()">
+                and #{end_time} >= stdtbl.createtime
+            </if>
+        </if>
+    </select>
+
+    <select id="getList" parameterType="java.util.Map" resultMap="studentMap">
+        select stdtbl.*, usertbl.* as userinfo,
+        classtbl.classid as classid, classtbl.name as classname,
+        orgtbl.name as orgname,
+        areatbl.areaid as areaid, areatbl.areaname as areaname
+        from t_e_student stdtbl
+        left join t_e_class classtbl on classtbl.classid = stdtbl.classid
+        left join t_e_user_logininfo usertbl on usertbl.userid = stdtbl.userid
+        left join t_e_org_edu orgtbl on orgtbl.orgid = usertbl.orgid
+        left join t_e_school schtbl on schtbl.orgid = orgtbl.orgid
+        left join t_jc_sys_area areatbl on areatbl.areaid = orgtbl.areaid
+        where 1 = 1
+        <if test="userid != null">
+          <if test="!userid.isEmpty()">
+              and stdtbl.userid = #{userid}
+          </if>
+        </if>
+        <if test="classid != null">
+            <if test="!classid.isEmpty()">
+                and stdtbl.classid = #{classid}
+            </if>
+        </if>
+        <if test="studentcode != null">
+            <if test="!studentcode.isEmpty()">
+                and stdtbl.studentcode = #{studentcode}
+            </if>
+        </if>
+        <if test="parentid != null">
+            <if test="!parentid.isEmpty()">
+                and stdtbl.parentid = #{parentid}
+            </if>
+        </if>
+        <if test="begin_time != null">
+            <if test="!begin_time.isEmpty()">
+                and stdtbl.createtime >= #{begin_time}
+            </if>
+        </if>
+        <if test="end_time != null">
+            <if test="!end_time.isEmpty()">
+                and #{end_time} >= stdtbl.createtime
+            </if>
+        </if>
+        <include refid="sqlFragment_pagination"/>
+    </select >
+</mapper>
